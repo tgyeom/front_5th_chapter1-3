@@ -1,12 +1,12 @@
 import { createContext, useContext, useState } from "react";
 import { useMemo, useCallback } from "../@lib";
 
-interface ContextValue {
+interface ThemeContextType {
   theme: string;
   toggleTheme: () => void;
 }
 
-export const ThemeContext = createContext<ContextValue | null>(null);
+export const ThemeContext = createContext<ThemeContextType | null>(null);
 
 type Props = {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export const ThemePropvider = ({ children }: Props) => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   }, []);
 
-  const contextValue: ContextValue = useMemo(
+  const contextValue: ThemeContextType = useMemo(
     () => ({
       theme,
       toggleTheme,
