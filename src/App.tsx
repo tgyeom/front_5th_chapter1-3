@@ -1,20 +1,13 @@
 import React, { useState } from "react";
 import { ThemePropvider, useThemeContext } from "./context";
-import { generateItems, renderLog } from "./utils";
-import { memo } from "./@lib";
+import { renderLog } from "./utils";
+import { memo, useMemo } from "./@lib";
 import {
   NotificationProvider,
   useNotifiactionContext,
 } from "./context/NotificationProvider";
 import { UserProvider, useUserContext } from "./context/UserProvider";
-
-// 타입 정의
-interface Item {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-}
+import { ItemProvider, useItemContext } from "./context/ItemProvider";
 
 // Header 컴포넌트
 export const Header: React.FC = memo(() => {
@@ -63,23 +56,27 @@ export const Header: React.FC = memo(() => {
 });
 
 // ItemList 컴포넌트
-export const ItemList: React.FC<{
-  items: Item[];
-  onAddItemsClick: () => void;
-}> = memo(({ items, onAddItemsClick }) => {
+export const ItemList: React.FC = memo(() => {
   renderLog("ItemList rendered");
   const [filter, setFilter] = useState("");
   const { theme } = useThemeContext();
+  const { items, addItems } = useItemContext();
 
   const filteredItems = items.filter(
-    (item) =>
+    (item: any) =>
       item.name.toLowerCase().includes(filter.toLowerCase()) ||
       item.category.toLowerCase().includes(filter.toLowerCase())
   );
 
-  const totalPrice = filteredItems.reduce((sum, item) => sum + item.price, 0);
+  const totalPrice = useMemo(
+    () => filteredItems.reduce((sum: number, item: any) => sum + item.price, 0),
+    [filteredItems]
+  );
 
-  const averagePrice = Math.round(totalPrice / filteredItems.length) || 0;
+  const averagePrice = useMemo(
+    () => Math.round(totalPrice / filteredItems.length) || 0,
+    [totalPrice]
+  );
 
   return (
     <div className="mt-8">
@@ -89,7 +86,7 @@ export const ItemList: React.FC<{
           <button
             type="button"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-xs"
-            onClick={onAddItemsClick}
+            onClick={addItems}
           >
             대량추가
           </button>
@@ -122,7 +119,7 @@ export const ItemList: React.FC<{
 });
 
 // ComplexForm 컴포넌트
-export const ComplexForm: React.FC = () => {
+export const ComplexForm: React.FC = memo(() => {
   renderLog("ComplexForm rendered");
   const { addNotification } = useNotifiactionContext();
   const [formData, setFormData] = useState({
@@ -204,10 +201,10 @@ export const ComplexForm: React.FC = () => {
       </form>
     </div>
   );
-};
+});
 
 // NotificationSystem 컴포넌트
-export const NotificationSystem: React.FC = () => {
+export const NotificationSystem: React.FC = memo(() => {
   renderLog("NotificationSystem rendered");
   const { notifications, removeNotification } = useNotifiactionContext();
 
@@ -237,35 +234,28 @@ export const NotificationSystem: React.FC = () => {
       ))}
     </div>
   );
-};
+});
 
 // 메인 App 컴포넌트
 const App: React.FC = () => {
-  const [items, setItems] = useState(generateItems(1000));
-
-  const addItems = () => {
-    setItems((prevItems) => [
-      ...prevItems,
-      ...generateItems(1000, prevItems.length),
-    ]);
-  };
-
   return (
     <ThemePropvider>
       <NotificationProvider>
         <UserProvider>
-          <Header />
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row">
-              <div className="w-full md:w-1/2 md:pr-4">
-                <ItemList items={items} onAddItemsClick={addItems} />
-              </div>
-              <div className="w-full md:w-1/2 md:pl-4">
-                <ComplexForm />
+          <ItemProvider>
+            <Header />
+            <div className="container mx-auto px-4 py-8">
+              <div className="flex flex-col md:flex-row">
+                <div className="w-full md:w-1/2 md:pr-4">
+                  <ItemList />
+                </div>
+                <div className="w-full md:w-1/2 md:pl-4">
+                  <ComplexForm />
+                </div>
               </div>
             </div>
-          </div>
-          <NotificationSystem />
+            <NotificationSystem />
+          </ItemProvider>
         </UserProvider>
       </NotificationProvider>
     </ThemePropvider>
