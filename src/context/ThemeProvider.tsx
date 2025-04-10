@@ -24,7 +24,7 @@ export const ThemePropvider = ({ children }: Props) => {
       theme,
       toggleTheme,
     }),
-    [theme],
+    [theme]
   );
 
   return (

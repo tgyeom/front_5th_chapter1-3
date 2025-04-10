@@ -1,8 +1,12 @@
-import React, { useState, createContext, useContext } from "react";
+import React, { useState } from "react";
 import { ThemePropvider, useThemeContext } from "./context";
 import { generateItems, renderLog } from "./utils";
 import { memo } from "./@lib";
-import { NotificationProvider, useNotifiactionContext } from "./context/NotificationProvider";
+import {
+  NotificationProvider,
+  useNotifiactionContext,
+} from "./context/NotificationProvider";
+import { UserProvider, useUserContext } from "./context/UserProvider";
 
 // 타입 정의
 interface Item {
@@ -12,34 +16,10 @@ interface Item {
   price: number;
 }
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
-
-// AppContext 타입 정의
-interface AppContextType {
-  user: User | null;
-  login: (email: string, password: string) => void;
-  logout: () => void;
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// 커스텀 훅: useAppContext
-const useAppContext = () => {
-  const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error("useAppContext must be used within an AppProvider");
-  }
-  return context;
-};
-
 // Header 컴포넌트
 export const Header: React.FC = memo(() => {
   renderLog("Header rendered");
-  const {  user, login, logout } = useAppContext();
+  const { user, login, logout } = useUserContext();
   const { theme, toggleTheme } = useThemeContext();
 
   const handleLogin = () => {
@@ -94,7 +74,7 @@ export const ItemList: React.FC<{
   const filteredItems = items.filter(
     (item) =>
       item.name.toLowerCase().includes(filter.toLowerCase()) ||
-      item.category.toLowerCase().includes(filter.toLowerCase()),
+      item.category.toLowerCase().includes(filter.toLowerCase())
   );
 
   const totalPrice = filteredItems.reduce((sum, item) => sum + item.price, 0);
@@ -262,7 +242,6 @@ export const NotificationSystem: React.FC = () => {
 // 메인 App 컴포넌트
 const App: React.FC = () => {
   const [items, setItems] = useState(generateItems(1000));
-  const [user, setUser] = useState<User | null>(null);
 
   const addItems = () => {
     setItems((prevItems) => [
@@ -271,39 +250,25 @@ const App: React.FC = () => {
     ]);
   };
 
-  const login = (email: string) => {
-    setUser({ id: 1, name: "홍길동", email });
-  };
-
-  const logout = () => {
-    setUser(null);
-  };
-
-  const contextValue: AppContextType = {
-    user,
-    login,
-    logout,
-  };
-
   return (
-    <AppContext.Provider value={contextValue}>
-      <ThemePropvider>
-        <NotificationProvider>
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row">
-            <div className="w-full md:w-1/2 md:pr-4">
-              <ItemList items={items} onAddItemsClick={addItems} />
-            </div>
-            <div className="w-full md:w-1/2 md:pl-4">
-              <ComplexForm />
+    <ThemePropvider>
+      <NotificationProvider>
+        <UserProvider>
+          <Header />
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex flex-col md:flex-row">
+              <div className="w-full md:w-1/2 md:pr-4">
+                <ItemList items={items} onAddItemsClick={addItems} />
+              </div>
+              <div className="w-full md:w-1/2 md:pl-4">
+                <ComplexForm />
+              </div>
             </div>
           </div>
-        </div>
-        <NotificationSystem />
-        </NotificationProvider>
-      </ThemePropvider>
-    </AppContext.Provider>
+          <NotificationSystem />
+        </UserProvider>
+      </NotificationProvider>
+    </ThemePropvider>
   );
 };
 
