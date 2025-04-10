@@ -1,5 +1,7 @@
 import React, { useState, createContext, useContext } from "react";
+import { ThemeContext, ThemePropvider, useThemeContext } from "./context";
 import { generateItems, renderLog } from "./utils";
+import { memo } from "./@lib";
 
 // 타입 정의
 interface Item {
@@ -23,8 +25,6 @@ interface Notification {
 
 // AppContext 타입 정의
 interface AppContextType {
-  theme: string;
-  toggleTheme: () => void;
   user: User | null;
   login: (email: string, password: string) => void;
   logout: () => void;
@@ -43,11 +43,11 @@ const useAppContext = () => {
   }
   return context;
 };
-
 // Header 컴포넌트
-export const Header: React.FC = () => {
+export const Header: React.FC = memo(() => {
   renderLog("Header rendered");
-  const { theme, toggleTheme, user, login, logout } = useAppContext();
+  const {  user, login, logout } = useAppContext();
+  const { theme, toggleTheme } = useThemeContext();
 
   const handleLogin = () => {
     // 실제 애플리케이션에서는 사용자 입력을 받아야 합니다.
@@ -87,16 +87,16 @@ export const Header: React.FC = () => {
       </div>
     </header>
   );
-};
+});
 
 // ItemList 컴포넌트
 export const ItemList: React.FC<{
   items: Item[];
   onAddItemsClick: () => void;
-}> = ({ items, onAddItemsClick }) => {
+}> = memo(({ items, onAddItemsClick }) => {
   renderLog("ItemList rendered");
   const [filter, setFilter] = useState("");
-  const { theme } = useAppContext();
+  const { theme } = useThemeContext();
 
   const filteredItems = items.filter(
     (item) =>
@@ -146,7 +146,7 @@ export const ItemList: React.FC<{
       </ul>
     </div>
   );
-};
+});
 
 // ComplexForm 컴포넌트
 export const ComplexForm: React.FC = () => {
@@ -268,14 +268,9 @@ export const NotificationSystem: React.FC = () => {
 
 // 메인 App 컴포넌트
 const App: React.FC = () => {
-  const [theme, setTheme] = useState("light");
   const [items, setItems] = useState(generateItems(1000));
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
 
   const addItems = () => {
     setItems((prevItems) => [
@@ -310,8 +305,6 @@ const App: React.FC = () => {
   };
 
   const contextValue: AppContextType = {
-    theme,
-    toggleTheme,
     user,
     login,
     logout,
@@ -322,9 +315,7 @@ const App: React.FC = () => {
 
   return (
     <AppContext.Provider value={contextValue}>
-      <div
-        className={`min-h-screen ${theme === "light" ? "bg-gray-100" : "bg-gray-900 text-white"}`}
-      >
+      <ThemePropvider>
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row">
@@ -337,7 +328,7 @@ const App: React.FC = () => {
           </div>
         </div>
         <NotificationSystem />
-      </div>
+      </ThemePropvider>
     </AppContext.Provider>
   );
 };
